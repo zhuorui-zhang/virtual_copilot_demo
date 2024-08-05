@@ -14,12 +14,14 @@ class ModelParams:
     top_p: float
     max_tokens: int
     temperature: float
+    llm_api: str
 
 def generate_llm_response(params: ModelParams) -> Union[str, dict]:
     if params.st_uploaded_img is not None:
         img_bytes = params.st_uploaded_img.getvalue()
         image = io.BytesIO(img_bytes)
         ## Convert image to base64
+        # you can create a data URI consisting of the base64 encoded data for your file, but this is only recommended if the file is < 1mb:
         base64_encoded_image = base64.b64encode(img_bytes).decode('utf-8')
         base64_image_str = f"data:application/octet-stream;base64,{base64_encoded_image}"
 
@@ -29,7 +31,8 @@ def generate_llm_response(params: ModelParams) -> Union[str, dict]:
     if params.selected_model == "llava-13B":
         
         output = replicate.run(
-            "yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
+            # "yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
+            params.llm_api,
             input={
                 "image": params.st_uploaded_img, #image, #base64_image_str
                 "top_p": params.top_p,
@@ -41,6 +44,17 @@ def generate_llm_response(params: ModelParams) -> Union[str, dict]:
     # TODO: Implement the logic for the "gpt-4o" model   
     elif params.selected_model == "gpt-4o":
         pass
+    elif params.selected_model == "Qwen-vl":
+        input = {
+            "image": params.st_uploaded_img,
+            "prompt": params.text_prompt,
+        }
+
+        output = replicate.run(
+            params.llm_api,
+            # "lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9",
+            input=input
+        )
     else:
         raise NotImplementedError
     return output
@@ -54,16 +68,15 @@ if __name__ == '__main__':
     st.title('✈️ Virtual Copilot 💬')
     st.caption("🚀 A chatbot powered by MLLM")
 
-    # Replicate Credentials
     with st.sidebar:
         st.title('✈️ Virtual Copilot 💬')
         selected_model = st.sidebar.selectbox('Choose a base model', ['llava-13B', 'gpt-4o', 'Qwen-vl'], key='selected_model')
 
         st.subheader('Models and parameters')        
         if selected_model == 'Qwen-vl':
-            llm = 'replicate/lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9'
+            llm_api = 'lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9'
         elif selected_model == 'llava-13B':
-            llm = 'yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb'
+            llm_api = 'yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb'
 
         temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
         top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
@@ -77,7 +90,8 @@ if __name__ == '__main__':
         selected_model=selected_model,
         top_p=top_p,
         max_tokens=max_length,
-        temperature=temperature
+        temperature=temperature,
+        llm_api=llm_api
     )
     # print(model_params.temperature)
     #Ensure session state for messages if it doesn't exist
@@ -101,11 +115,11 @@ if __name__ == '__main__':
     
 
     # Create a form for user input and file upload
+    upload_img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+    
     with st.form(key='user_input_form'):
-        
-        upload_img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
         if upload_img is not None:
-            print(upload_img, "uploaded", type(upload_img))
+            # print(upload_img, "uploaded", type(upload_img))
             image = Image.open(upload_img)
             st.image(image, caption='Uploaded Image', use_column_width=True)
         text_input = st.text_input("Type a message:", key="input_text")
