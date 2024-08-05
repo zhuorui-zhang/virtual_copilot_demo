@@ -19,7 +19,6 @@ class ModelParams:
     temperature: float
     llm_api: str
 
-
 def generate_llm_response(params: ModelParams) -> Union[str, dict]:
     if params.st_uploaded_img is not None:
         img_bytes = params.st_uploaded_img.getvalue()
@@ -124,7 +123,6 @@ if __name__ == '__main__':
 
     # Create a form for user input and file upload
     upload_img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-
     with st.form(key='user_input_form'):
         if upload_img is not None:
             # print(upload_img, "uploaded", type(upload_img))
