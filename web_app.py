@@ -5,6 +5,9 @@ import io
 from dataclasses import dataclass
 from typing import Optional, Union
 import base64
+import os
+from main import web_warning_detect
+
 
 @dataclass
 class ModelParams:
@@ -15,6 +18,7 @@ class ModelParams:
     max_tokens: int
     temperature: float
     llm_api: str
+
 
 def generate_llm_response(params: ModelParams) -> Union[str, dict]:
     if params.st_uploaded_img is not None:
@@ -27,29 +31,28 @@ def generate_llm_response(params: ModelParams) -> Union[str, dict]:
 
     else:
         raise ValueError("Image must be provided for the selected model.")
-    
+
     if params.selected_model == "llava-13B":
-        
         output = replicate.run(
             # "yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
             params.llm_api,
             input={
-                "image": params.st_uploaded_img, #image, #base64_image_str
+                "image": params.st_uploaded_img,  # image, #base64_image_str
                 "top_p": params.top_p,
                 "prompt": params.text_prompt,
                 "max_tokens": params.max_tokens,
                 "temperature": params.temperature
             }
         )
-    # TODO: Implement the logic for the "gpt-4o" model   
+    # TODO: Implement the logic for the "gpt-4o" model
     elif params.selected_model == "gpt-4o":
-        pass
+        output = web_warning_detect(image)
+
     elif params.selected_model == "Qwen-vl":
         input = {
             "image": params.st_uploaded_img,
             "prompt": params.text_prompt,
         }
-
         output = replicate.run(
             params.llm_api,
             # "lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9",
@@ -59,31 +62,38 @@ def generate_llm_response(params: ModelParams) -> Union[str, dict]:
         raise NotImplementedError
     return output
 
+
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
+
 if __name__ == '__main__':
-    
+
     st.set_page_config(page_title="✈️ Virtual Copilot 💬")
     st.title('✈️ Virtual Copilot 💬')
     st.caption("🚀 A chatbot powered by MLLM")
 
     with st.sidebar:
         st.title('✈️ Virtual Copilot 💬')
-        selected_model = st.sidebar.selectbox('Choose a base model', ['llava-13B', 'gpt-4o', 'Qwen-vl'], key='selected_model')
+        selected_model = st.sidebar.selectbox('Choose a base model', ['llava-13B', 'gpt-4o', 'Qwen-vl'],
+                                              key='selected_model')
 
-        st.subheader('Models and parameters')        
+        st.subheader('Models and parameters')
         if selected_model == 'Qwen-vl':
             llm_api = 'lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9'
         elif selected_model == 'llava-13B':
             llm_api = 'yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb'
+        elif selected_model == 'gpt-4o':
+            llm_api = 'HUANG RUOBING/gpt-4o:' + os.environ.get("OPENAI_API_KEY")
+            print(llm_api)
 
         temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
         top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
         max_length = st.sidebar.slider('max_length', min_value=64, max_value=4096, value=512, step=8)
-        
-        st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
-        
+
+        st.markdown(
+            '📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
+
     model_params = ModelParams(
         text_prompt=None,
         st_uploaded_img=None,
@@ -94,7 +104,7 @@ if __name__ == '__main__':
         llm_api=llm_api
     )
     # print(model_params.temperature)
-    #Ensure session state for messages if it doesn't exist
+    # Ensure session state for messages if it doesn't exist
     if 'messages' not in st.session_state:
         st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
@@ -103,20 +113,18 @@ if __name__ == '__main__':
 
     # Display or clear chat messages
     for message in st.session_state.messages:
-        print('message:',message)
+        print('message:', message)
         with st.chat_message(message["role"]):
             if message.get("type") == "image":
                 st.image(message["content"])
             else:
                 st.write(message["content"])
 
-
     st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
-    
 
     # Create a form for user input and file upload
     upload_img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-    
+
     with st.form(key='user_input_form'):
         if upload_img is not None:
             # print(upload_img, "uploaded", type(upload_img))
@@ -124,12 +132,11 @@ if __name__ == '__main__':
             st.image(image, caption='Uploaded Image', use_column_width=True)
         text_input = st.text_input("Type a message:", key="input_text")
         submit_button = st.form_submit_button(label='Send')
-    
 
     if submit_button:
         prompt = text_input
         if upload_img:
-            #If an image is uploaded, store it in session_state
+            # If an image is uploaded, store it in session_state
             st.session_state.messages.append({"role": "user", "content": upload_img, "type": "image"})
 
         if prompt:
@@ -152,5 +159,6 @@ if __name__ == '__main__':
                     placeholder.markdown(full_response)
             message = {"role": "assistant", "content": full_response}
             st.session_state.messages.append(message)
-        
-    
+            # 打开音频文件
+            st.audio('test.mp3', format="audio/mpeg", loop=True)
+
