@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=copilot
+Comment=This is a shortcut to run copilot webui
+Exec=/home/zhangzr/virtual_copilot_demo/run.sh
+Icon=/home/zhangzr/virtual_copilot_demo/src/icon.png
+Terminal=true
+Type=Application

@@ -86,8 +86,10 @@ with st.sidebar:
     temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
     top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
     max_length = st.sidebar.slider('max_length', min_value=64, max_value=4096, value=512, step=8)
-    
-    st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
+    st.sidebar.button('Clear Chat History', on_click=clear_chat_history, type='primary')
+    # st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
+    lab_text = utils.set_text('📖 Learn more about our [lab!](https://shineergo.wixsite.com/homepage)', font_size=16, font_weight='bold')
+    st.markdown(lab_text, unsafe_allow_html=True)
     
 model_params = ModelParams(
     text_prompt=None,
@@ -114,9 +116,6 @@ for message in st.session_state.messages:
             st.image(message["content"])
         else:
             st.write(message["content"])
-
-
-st.sidebar.button('Clear Chat History', on_click=clear_chat_history)
 
 
 # Create a form for user input and file upload

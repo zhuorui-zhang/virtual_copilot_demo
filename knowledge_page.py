@@ -27,14 +27,17 @@ with st.container(border=True):
     # 嵌入具有自己端口号的子页面
     # subpage_url = "http://localhost:8888"  # 替换为实际的子页面URL和端口号
     # 添加一个按钮，点击后跳转到指定URL
-    if st.button("💡 Build Knowledge Graph", use_container_width=True, type='primary'):
+    build_button = st.button("💡 Build Knowledge Graph", use_container_width=True)
+    utils.ChangeButtonColour('💡 Build Knowledge Graph', 'black', '#ACF4A2')
+    if build_button:
+        utils.ChangeButtonColour('💡 Build Knowledge Graph', 'black', '#FC5252')
         with st.spinner('Building Knowledge Graph...'):
             toNeo4j_v2.main()
             st.success('Graph Build Successful!', icon="✅")
             st.balloons()
         subpage_url = 'http://localhost:7474/browser/'  # 替换为实际的URL
         # st.write(f"[Finished! Click Here To Watch Your Results~]({subpage_url})")
-        st.link_button("Finished! Click Here To View Your Results~", subpage_url)
+        st.link_button("Finished! Click Here To View Your Results~", subpage_url, type='primary')
         # Neo4j donot support to be embedded in iframe, you need other tricks to enabel x-frame-options
         # st.components.v1.iframe(subpage_url, width=iframe_width, height=iframe_height)
 
