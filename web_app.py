@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Optional, Union
 import base64
 import os
-from main import web_warning_detect
+from gpt_copilot.main import web_warning_detect
 
 
 @dataclass

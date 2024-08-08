@@ -7,7 +7,6 @@ import pandas as pd
 from scipy import sparse
 import openai  # for generating embeddings
 import tiktoken
-import pickle
 from ast import literal_eval
 
 model="gpt-4o"

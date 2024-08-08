@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from typing import Optional, Union
 import base64
 import utils
-
+from gpt_copilot.main import web_warning_detect
+import os
 
 @dataclass
 class ModelParams:
@@ -45,7 +46,8 @@ def generate_llm_response(params: ModelParams) -> Union[str, dict]:
         )
     # TODO: Implement the logic for the "gpt-4o" model   
     elif params.selected_model == "gpt-4o":
-        pass
+        output = web_warning_detect(image)
+
     elif params.selected_model == "Qwen-vl":
         input = {
             "image": params.st_uploaded_img,
@@ -82,7 +84,10 @@ with st.sidebar:
         llm_api = 'lucataco/qwen-vl-chat:50881b153b4d5f72b3db697e2bbad23bb1277ab741c5b52d80cd6ee17ea660e9'
     elif selected_model == 'llava-13B':
         llm_api = 'yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb'
-
+    elif selected_model == 'gpt-4o':
+        llm_api = 'HUANG RUOBING/gpt-4o:' + os.environ.get("OPENAI_API_KEY")
+        # print(llm_api)
+    
     temperature = st.sidebar.slider('temperature', min_value=0.01, max_value=5.0, value=0.1, step=0.01)
     top_p = st.sidebar.slider('top_p', min_value=0.01, max_value=1.0, value=0.9, step=0.01)
     max_length = st.sidebar.slider('max_length', min_value=64, max_value=4096, value=512, step=8)
@@ -156,5 +161,7 @@ if submit_button:
                 placeholder.markdown(full_response)
         message = {"role": "assistant", "content": full_response}
         st.session_state.messages.append(message)
+        # 打开音频文件
+        st.audio('gpt_copilot/test.mp3', format="audio/mpeg", loop=True)
         
     

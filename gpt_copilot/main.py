@@ -16,8 +16,8 @@ import json
 import pyttsx3
 
 
-from  get_bndbox import get_boxes
-from rsg import rsg
+from gpt_copilot.get_bndbox import get_boxes
+from gpt_copilot.rsg import rsg
 
 SAVE_PATH = "img_instructed_warning_dataset2_0725.csv"
 data_path = r'merged0518.csv'
@@ -407,90 +407,90 @@ def web_warning_detect(io_img):
 
 
 if __name__ == '__main__':
-        image_dir = r"gpt_copilot/data/test_img"  # 替换为实际图像路径186
-        img_files = [file for file in os.listdir(image_dir) if file.endswith('.jpg')]
-        img_detect = 1
-        save = 0
-        table = pd.DataFrame()
-        i=0
-        for img_file in img_files:
-            image_path = os.path.join(image_dir, img_file)
-            print(img_file)
-            img = Image.open(image_path)
-            # 设置缩放比例或目标尺寸
-            scale_factor = 0.5  # 缩小为原始尺寸的 50%
-            new_width = int(img.width * scale_factor)
-            new_height = int(img.height * scale_factor)
-            # 使用 Image 类的 resize 方法进行下采样
-            resampled_img = img.resize((new_width, new_height))
+    image_dir = r"gpt_copilot/data/test_img"  # 替换为实际图像路径186
+    img_files = [file for file in os.listdir(image_dir) if file.endswith('.jpg')]
+    img_detect = 1
+    save = 0
+    table = pd.DataFrame()
+    i=0
+    for img_file in img_files:
+        image_path = os.path.join(image_dir, img_file)
+        print(img_file)
+        img = Image.open(image_path)
+        # 设置缩放比例或目标尺寸
+        scale_factor = 0.5  # 缩小为原始尺寸的 50%
+        new_width = int(img.width * scale_factor)
+        new_height = int(img.height * scale_factor)
+        # 使用 Image 类的 resize 方法进行下采样
+        resampled_img = img.resize((new_width, new_height))
 
-            if img_detect:
-                bnd_ls, roi= get_boxes(resampled_img)
-                if save:
-                    size = {"width": new_width, "height": new_height, "depth": 3}
-                    flag=True if len(bnd_ls)>0 else False
-                    data = {
-                        "path": img_file,
-                        "outputs": {
-                            "object": [roi, bnd_ls]
-                        },
-                        "time_labeled": int(time.time() * 1000),  # 当前时间的毫秒数
-                        "labeled": flag,
-                        "size": size
-                    }
-
-                    # 将数据转换为JSON格式字符串
-                    json_data = json.dumps(data, indent=4)
-                    # 保存到文件
-                    image_name = os.path.splitext(img_file)[0]
-                    json_filename = f"{image_name}.json"
-                    with open(json_filename, "w") as json_file:
-                        json_file.write(json_data)
-                    print(json_filename+" processed successfully")
-
+        if img_detect:
+            bnd_ls, roi= get_boxes(resampled_img)
             if save:
-                json_file=os.path.join(os.path.splitext(img_file)[0] + '.json')
-                bnd_ls,roi=extract_bndboxes_from_file(json_file)
-            if len(roi)==0:
-                results = 'No warning'
-            else:
-                xmin=int(0.85*roi["xmin"])
-                ymin=int(0.95*roi["ymin"])
-                xmax=int(roi["xmax"])
-                ymax=int(roi["ymax"])
-                crop_img = resampled_img.crop((xmin,ymin,xmax,ymax))
-                roi_box_gt = [xmin,ymin, xmax, ymax]
-                roi_box_gt2 = [xmin,ymin,xmin,ymin]
-                resampled_img = crop_img.resize((512, 512))
-                factor1=512/(roi_box_gt[2]-roi_box_gt[0])#1024
-                factor2=512/(roi_box_gt[3]-roi_box_gt[1])
-                msg_box_ls=[]
-                draw = ImageDraw.Draw(resampled_img)
-                result='No warning'
-                results=[]
-                if len(bnd_ls)>0:
-                    for json_box in bnd_ls:
-                        msg_bnd_box = [json_box["xmin"], json_box["ymin"], json_box["xmax"], json_box["ymax"]]
-                        msg_rlt_box = [max(0,msg_bnd_box[j] - roi_box_gt2[j]) for j in range(4)]
-                        msg_rlt_box_cp = msg_rlt_box
+                size = {"width": new_width, "height": new_height, "depth": 3}
+                flag=True if len(bnd_ls)>0 else False
+                data = {
+                    "path": img_file,
+                    "outputs": {
+                        "object": [roi, bnd_ls]
+                    },
+                    "time_labeled": int(time.time() * 1000),  # 当前时间的毫秒数
+                    "labeled": flag,
+                    "size": size
+                }
 
-                        msg_box = {"left top corner x": int(msg_rlt_box[0] * factor1),
-                                   "left top corner y": int(msg_rlt_box[1] * factor2),
-                                   "right bottom corner x": int(msg_rlt_box[2] * factor1),
-                                   "right bottom corner y": int(msg_rlt_box[3] * factor2)}
-                        msg_box_ls.append(msg_box)
-                        rect=resampled_img.crop((int(msg_rlt_box[0] * factor1),int(msg_rlt_box[1] * factor2),
-                                                 int(msg_rlt_box[2] * factor1),int(msg_rlt_box[3] * factor2)))
-                        draw.rectangle([(msg_box["left top corner x"],msg_box["left top corner y"]),(msg_box["right bottom corner x"],msg_box["right bottom corner y"])], outline='green',width=4)
-                        #rect.show()
-                        base64_image = encode_image(rect)
-                        result = bndbox_analyze(base64_image, msg_box_ls)
-                        warning=re.findall(r'"(.*?)"', result)
-                        results.append(warning[0])
-                        print(results)
-            reply = rsg(results[0], data_path)
-            text2speech(reply)
-            print(reply)
+                # 将数据转换为JSON格式字符串
+                json_data = json.dumps(data, indent=4)
+                # 保存到文件
+                image_name = os.path.splitext(img_file)[0]
+                json_filename = f"{image_name}.json"
+                with open(json_filename, "w") as json_file:
+                    json_file.write(json_data)
+                print(json_filename+" processed successfully")
+
+        if save:
+            json_file=os.path.join(os.path.splitext(img_file)[0] + '.json')
+            bnd_ls,roi=extract_bndboxes_from_file(json_file)
+        if len(roi)==0:
+            results = 'No warning'
+        else:
+            xmin=int(0.85*roi["xmin"])
+            ymin=int(0.95*roi["ymin"])
+            xmax=int(roi["xmax"])
+            ymax=int(roi["ymax"])
+            crop_img = resampled_img.crop((xmin,ymin,xmax,ymax))
+            roi_box_gt = [xmin,ymin, xmax, ymax]
+            roi_box_gt2 = [xmin,ymin,xmin,ymin]
+            resampled_img = crop_img.resize((512, 512))
+            factor1=512/(roi_box_gt[2]-roi_box_gt[0])#1024
+            factor2=512/(roi_box_gt[3]-roi_box_gt[1])
+            msg_box_ls=[]
+            draw = ImageDraw.Draw(resampled_img)
+            result='No warning'
+            results=[]
+            if len(bnd_ls)>0:
+                for json_box in bnd_ls:
+                    msg_bnd_box = [json_box["xmin"], json_box["ymin"], json_box["xmax"], json_box["ymax"]]
+                    msg_rlt_box = [max(0,msg_bnd_box[j] - roi_box_gt2[j]) for j in range(4)]
+                    msg_rlt_box_cp = msg_rlt_box
+
+                    msg_box = {"left top corner x": int(msg_rlt_box[0] * factor1),
+                                "left top corner y": int(msg_rlt_box[1] * factor2),
+                                "right bottom corner x": int(msg_rlt_box[2] * factor1),
+                                "right bottom corner y": int(msg_rlt_box[3] * factor2)}
+                    msg_box_ls.append(msg_box)
+                    rect=resampled_img.crop((int(msg_rlt_box[0] * factor1),int(msg_rlt_box[1] * factor2),
+                                                int(msg_rlt_box[2] * factor1),int(msg_rlt_box[3] * factor2)))
+                    draw.rectangle([(msg_box["left top corner x"],msg_box["left top corner y"]),(msg_box["right bottom corner x"],msg_box["right bottom corner y"])], outline='green',width=4)
+                    #rect.show()
+                    base64_image = encode_image(rect)
+                    result = bndbox_analyze(base64_image, msg_box_ls)
+                    warning=re.findall(r'"(.*?)"', result)
+                    results.append(warning[0])
+                    print(results)
+        reply = rsg(results[0], data_path)
+        text2speech(reply)
+        print(reply)
 
 
 
