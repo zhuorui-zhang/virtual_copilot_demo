@@ -20,7 +20,7 @@ from gpt_copilot.get_bndbox import get_boxes
 from gpt_copilot.rsg import rsg
 
 SAVE_PATH = "img_instructed_warning_dataset2_0725.csv"
-data_path = r'merged0518.csv'
+data_path = r'gpt_copilot/merged0518.csv'
 model="gpt-4o"
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>"))
 

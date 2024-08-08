@@ -151,8 +151,8 @@ if submit_button:
     if st.session_state.messages[-1]["role"] != "assistant":
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                # response = generate_llm_response(model_params)
-                response = ["Use dummpy reply for test"]
+                response = generate_llm_response(model_params)
+                # response = ["Use dummpy reply for test"]
                 placeholder = st.empty()
                 full_response = ''
                 for item in response:
