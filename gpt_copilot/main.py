@@ -13,17 +13,15 @@ import re
 import time
 import cv2
 import json
+import pyttsx3
 
-from  get_bndbox import get_boxes
-from rsg import rsg
 
-import easyocr
-import matplotlib.pyplot as plt
+from gpt_copilot.get_bndbox import get_boxes
+from gpt_copilot.rsg import rsg
 
 SAVE_PATH = "img_instructed_warning_dataset2_0725.csv"
-data_path = r'data/merged0518.csv'
+data_path = r'gpt_copilot/merged0518.csv'
 model="gpt-4o"
-#model = "gpt-4-turbo-preview"
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "<your OpenAI API key if not set as env var>"))
 
 img_analyze_prompt = '''
@@ -105,7 +103,7 @@ def bndbox_analyze(base64_image,bnd_box):
         "messages": [
             {
                 "role": "system",
-                "content": f"recognize the warning text in the image and then only return the warning"
+                "content": "recognize the warning text in the image and then return each warning with brace,for example:{OVER SPEED},{ENG1 FAIL} "
             },
 
             {
@@ -326,31 +324,115 @@ def extract_bndboxes_from_file(json_path):
     return bndboxes,roi_box
 
 
-if __name__ == '__main__':
-        image_dir = r"data/test_img"  # 替换为实际图像路径186
-        img_files = [file for file in os.listdir(image_dir) if file.endswith('.jpg')]
-        img_detect = 1
-        table = pd.DataFrame()
-        i=0
-        for img_file in img_files:
-            image_path = os.path.join(image_dir, img_file)
-            print(img_file)
-            img = Image.open(image_path)
-            # 设置缩放比例或目标尺寸
-            scale_factor = 0.5  # 缩小为原始尺寸的 50%
-            new_width = int(img.width * scale_factor)
-            new_height = int(img.height * scale_factor)
-            # 使用 Image 类的 resize 方法进行下采样
-            resampled_img = img.resize((new_width, new_height))
+def text2speech(text):
+    engine = pyttsx3.init()  # object creation
 
-            if img_detect:
-                warnings, roi= get_boxes(img_file, resampled_img)
+    """ RATE"""
+    rate = engine.getProperty('rate')  # getting details of current speaking rate
+    print(rate)  # printing current voice rate
+    engine.setProperty('rate', 125)  # setting up new voice rate
+
+    """VOLUME"""
+    volume = engine.getProperty('volume')  # getting to know current volume level (min=0 and max=1)
+    print(volume)  # printing current volume level
+    engine.setProperty('volume', 1.0)  # setting up volume level  between 0 and 1
+
+    """VOICE"""
+    voices = engine.getProperty('voices')  # getting details of current voice
+    # engine.setProperty('voice', voices[0].id)  #changing index, changes voices. o for male
+    engine.setProperty('voice', voices[1].id)  # changing index, changes voices. 1 for female
+    engine.runAndWait()
+    engine.stop()
+
+    """Saving Voice to a file"""
+    # On linux make sure that 'espeak' and 'ffmpeg' are installed
+    engine.save_to_file(text, 'test.mp3')
+    engine.runAndWait()
+
+
+def web_warning_detect(io_img):
+    file_bytes = np.asarray(bytearray(io_img.read()), dtype=np.uint8)
+    cv_img = cv2.imdecode(file_bytes, 1)
+    # 设置缩放比例或目标尺寸
+    img=Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB))
+    scale_factor = 0.5  # 缩小为原始尺寸的 50%
+    new_width = int(img.width * scale_factor)
+    new_height = int(img.height * scale_factor)
+    # 使用 Image 类的 resize 方法进行下采样
+    resampled_img = img.resize((new_width, new_height))
+    bnd_ls, roi = get_boxes(img=resampled_img)
+    if len(roi) == 0:
+        results = 'No warning'
+    else:
+        xmin = int(0.85 * roi["xmin"])
+        ymin = int(0.95 * roi["ymin"])
+        xmax = int(roi["xmax"])
+        ymax = int(roi["ymax"])
+        crop_img = resampled_img.crop((xmin, ymin, xmax, ymax))
+        roi_box_gt = [xmin, ymin, xmax, ymax]
+        roi_box_gt2 = [xmin, ymin, xmin, ymin]
+        resampled_img = crop_img.resize((512, 512))
+        factor1 = 512 / (roi_box_gt[2] - roi_box_gt[0])  # 1024
+        factor2 = 512 / (roi_box_gt[3] - roi_box_gt[1])
+        msg_box_ls = []
+        draw = ImageDraw.Draw(resampled_img)
+        result = 'No warning'
+        results = []
+        if len(bnd_ls) > 0:
+            for json_box in bnd_ls:
+                msg_bnd_box = [json_box["xmin"], json_box["ymin"], json_box["xmax"], json_box["ymax"]]
+                msg_rlt_box = [max(0, msg_bnd_box[j] - roi_box_gt2[j]) for j in range(4)]
+                msg_rlt_box_cp = msg_rlt_box
+
+                msg_box = {"left top corner x": int(msg_rlt_box[0] * factor1),
+                           "left top corner y": int(msg_rlt_box[1] * factor2),
+                           "right bottom corner x": int(msg_rlt_box[2] * factor1),
+                           "right bottom corner y": int(msg_rlt_box[3] * factor2)}
+                msg_box_ls.append(msg_box)
+                rect = resampled_img.crop((int(msg_rlt_box[0] * factor1), int(msg_rlt_box[1] * factor2),
+                                           int(msg_rlt_box[2] * factor1), int(msg_rlt_box[3] * factor2)))
+                #draw.rectangle([(msg_box["left top corner x"], msg_box["left top corner y"]),
+                #                (msg_box["right bottom corner x"], msg_box["right bottom corner y"])], outline='green',
+                #               width=4)
+                # rect.show()
+                base64_image = encode_image(rect)
+                result = bndbox_analyze(base64_image, msg_box_ls)
+                warning = re.findall(r'{(.*?)}', result)
+                results.append(warning[0])
+                print(results)
+    actions_reply = rsg(results[0], data_path)
+    reply = 'warning:'+results[0]+'\n'+actions_reply
+    text2speech(reply)
+    return reply
+
+
+if __name__ == '__main__':
+    image_dir = r"gpt_copilot/data/test_img"  # 替换为实际图像路径186
+    img_files = [file for file in os.listdir(image_dir) if file.endswith('.jpg')]
+    img_detect = 1
+    save = 0
+    table = pd.DataFrame()
+    i=0
+    for img_file in img_files:
+        image_path = os.path.join(image_dir, img_file)
+        print(img_file)
+        img = Image.open(image_path)
+        # 设置缩放比例或目标尺寸
+        scale_factor = 0.5  # 缩小为原始尺寸的 50%
+        new_width = int(img.width * scale_factor)
+        new_height = int(img.height * scale_factor)
+        # 使用 Image 类的 resize 方法进行下采样
+        resampled_img = img.resize((new_width, new_height))
+
+        if img_detect:
+            bnd_ls, roi= get_boxes(resampled_img)
+            if save:
                 size = {"width": new_width, "height": new_height, "depth": 3}
-                flag=True if len(warnings)>0 else False
+                flag=True if len(bnd_ls)>0 else False
                 data = {
                     "path": img_file,
                     "outputs": {
-                        "object": [roi, warnings]
+                        "object": [roi, bnd_ls]
                     },
                     "time_labeled": int(time.time() * 1000),  # 当前时间的毫秒数
                     "labeled": flag,
@@ -365,50 +447,50 @@ if __name__ == '__main__':
                 with open(json_filename, "w") as json_file:
                     json_file.write(json_data)
                 print(json_filename+" processed successfully")
-                #cv2.waitKey(0)
-                #cv2.destroyAllWindows()
 
+        if save:
             json_file=os.path.join(os.path.splitext(img_file)[0] + '.json')
             bnd_ls,roi=extract_bndboxes_from_file(json_file)
-            if len(roi)==0:
-                results = 'No warning'
-            else:
-                xmin=int(0.85*roi["xmin"])
-                ymin=int(0.95*roi["ymin"])
-                xmax=int(roi["xmax"])
-                ymax=int(roi["ymax"])
-                crop_img = resampled_img.crop((xmin,ymin,xmax,ymax))
-                roi_box_gt = [xmin,ymin, xmax, ymax]
-                roi_box_gt2 = [xmin,ymin,xmin,ymin]
-                resampled_img = crop_img.resize((512, 512))
-                factor1=512/(roi_box_gt[2]-roi_box_gt[0])#1024
-                factor2=512/(roi_box_gt[3]-roi_box_gt[1])
-                msg_box_ls=[]
-                draw = ImageDraw.Draw(resampled_img)
-                result='No warning'
-                results=[]
-                if len(bnd_ls)>0:
-                    for json_box in bnd_ls:
-                        msg_bnd_box = [json_box["xmin"], json_box["ymin"], json_box["xmax"], json_box["ymax"]]
-                        msg_rlt_box = [max(0,msg_bnd_box[j] - roi_box_gt2[j]) for j in range(4)]
-                        msg_rlt_box_cp = msg_rlt_box
+        if len(roi)==0:
+            results = 'No warning'
+        else:
+            xmin=int(0.85*roi["xmin"])
+            ymin=int(0.95*roi["ymin"])
+            xmax=int(roi["xmax"])
+            ymax=int(roi["ymax"])
+            crop_img = resampled_img.crop((xmin,ymin,xmax,ymax))
+            roi_box_gt = [xmin,ymin, xmax, ymax]
+            roi_box_gt2 = [xmin,ymin,xmin,ymin]
+            resampled_img = crop_img.resize((512, 512))
+            factor1=512/(roi_box_gt[2]-roi_box_gt[0])#1024
+            factor2=512/(roi_box_gt[3]-roi_box_gt[1])
+            msg_box_ls=[]
+            draw = ImageDraw.Draw(resampled_img)
+            result='No warning'
+            results=[]
+            if len(bnd_ls)>0:
+                for json_box in bnd_ls:
+                    msg_bnd_box = [json_box["xmin"], json_box["ymin"], json_box["xmax"], json_box["ymax"]]
+                    msg_rlt_box = [max(0,msg_bnd_box[j] - roi_box_gt2[j]) for j in range(4)]
+                    msg_rlt_box_cp = msg_rlt_box
 
-                        msg_box = {"left top corner x": int(msg_rlt_box[0] * factor1),
-                                   "left top corner y": int(msg_rlt_box[1] * factor2),
-                                   "right bottom corner x": int(msg_rlt_box[2] * factor1),
-                                   "right bottom corner y": int(msg_rlt_box[3] * factor2)}
-                        msg_box_ls.append(msg_box)
-                        rect=resampled_img.crop((int(msg_rlt_box[0] * factor1),int(msg_rlt_box[1] * factor2),
-                                                 int(msg_rlt_box[2] * factor1),int(msg_rlt_box[3] * factor2)))
-                        draw.rectangle([(msg_box["left top corner x"],msg_box["left top corner y"]),(msg_box["right bottom corner x"],msg_box["right bottom corner y"])], outline='green',width=4)
-                        #rect.show()
-                        base64_image = encode_image(rect)
-                        result = bndbox_analyze(base64_image, msg_box_ls)
-                        warning=re.findall(r'"(.*?)"', result)
-                        results.append(warning[0])
-                        print(results)
-            reply=rsg(results[0], data_path)
-            print(reply)
+                    msg_box = {"left top corner x": int(msg_rlt_box[0] * factor1),
+                                "left top corner y": int(msg_rlt_box[1] * factor2),
+                                "right bottom corner x": int(msg_rlt_box[2] * factor1),
+                                "right bottom corner y": int(msg_rlt_box[3] * factor2)}
+                    msg_box_ls.append(msg_box)
+                    rect=resampled_img.crop((int(msg_rlt_box[0] * factor1),int(msg_rlt_box[1] * factor2),
+                                                int(msg_rlt_box[2] * factor1),int(msg_rlt_box[3] * factor2)))
+                    draw.rectangle([(msg_box["left top corner x"],msg_box["left top corner y"]),(msg_box["right bottom corner x"],msg_box["right bottom corner y"])], outline='green',width=4)
+                    #rect.show()
+                    base64_image = encode_image(rect)
+                    result = bndbox_analyze(base64_image, msg_box_ls)
+                    warning=re.findall(r'"(.*?)"', result)
+                    results.append(warning[0])
+                    print(results)
+        reply = rsg(results[0], data_path)
+        text2speech(reply)
+        print(reply)
 
 
 

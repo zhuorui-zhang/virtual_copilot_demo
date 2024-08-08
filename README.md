@@ -8,8 +8,12 @@ This chatbot is created using LLM models and streamlit.
 streamlit
 replicate
 ```
+## Prerequisite software
+```
+Neo4j
+```
 
 ## Usage
 ```
-streamlit run web_app.py 
+streamlit run web_app_v2.py
 ``` 
