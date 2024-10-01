@@ -158,5 +158,5 @@ if __name__ == '__main__':
             message = {"role": "assistant", "content": full_response}
             st.session_state.messages.append(message)
             # 打开音频文件
-            st.audio('test.mp3', format="audio/mpeg", loop=True)
+            st.audio('tmp.mp3', format="audio/mpeg", loop=True)
 

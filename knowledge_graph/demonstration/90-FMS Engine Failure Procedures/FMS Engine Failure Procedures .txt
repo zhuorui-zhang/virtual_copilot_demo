@@ -1,0 +1,37 @@
+American uses FMS Engine Failure Procedures for takeoff.Engine Failure
+Procedures are used at airports with difficult terrain or departure issues such as
+Reno(KRNO),Washington DC(KDCA),San Francisco(KSFO),San Diego
+(KSAN)among many that have these procedures.The procedure is listed in the
+Jepp app under the Company (CO)pages.They will be named RWY TO
+This lists the runway and shows it is a takeoff procedure for which aircraft.
+For SAN runway 09 they use RWY 09 TO ALL AIRCRAFT.This reads as
+Runway 09 Takeoff All Aircraft.For KDCA they use RWY 01 TO A32F.This
+shows it is a procedure for Runway 01 Takeoff for the A320 Family(A319,320,
+321).This procedure will be named at the top of the page using AA and the
+runway if the procedure is available as an FMS procedure.For example at Reno
+the procedure is AA34L for runway 34L.
+You should select SEC F-PLN,then INIT and enter the departure airport for both
+airport codes.For example for Reno enter KRNO/KRNO.Then select the runway
+in the SEC F-PLN and use the Engine Failure Procedure as the departure(SID)
+This will make the procedure available if you have engine failure on takeoff.Just
+have the PM select the SEC FLT PLAN and ACTIVATE it.You can then easily fly
+the Engine Failure Procedure on managed autopilot.
+Not all procedures have an FMS departure built.You may want to use the FIX
+INFO page to build a reference on the PFD.For example at KSAN you could use
+a radius of 7 nm from MZB to build a reference circle for the turn at MZB D7.0 to
+turn to heading 220.
+At KPHX you can build the departure using fixes that are already built and made.
+Just use the names they give.For example runway 08 uses fixes of PHX01 and
+PHX02 while runway 07L uses PHX03 and PHX04
+Note:American does not build separate procedures into the FMGC for Engine
+Failure on Missed Approach.If a procedure is listed for Missed Approach(MA)it
+typically will be the same as the takeoff procedure.There is a separate engine
+failure procedure for missed approach you will normally have to load the takeoff
+procedure.This means you will have to load the arrival city just as you did the
+departure city in the SEC F-PLN.For example if you are flying from PHX to RNO
+you would enter KRNO/KRNO in the SEC F-PLN to initialize it.Then enter the
+procedure as listed.You may need to DELETE the current SEC F-PLN if you had
+one already loaded for a different airport.Do not use the CLR key to try to
+change the airport codes.Just use the DELETE command.
+
+

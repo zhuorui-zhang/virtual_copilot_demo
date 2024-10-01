@@ -1,4 +1,8 @@
 import tkinter as tk
+import streamlit as st
+
+def print_red(text):
+    print(f"\033[91m{text}\033[00m")
 
 def get_screen_HW():
     # 创建一个隐藏的Tkinter窗口
@@ -17,8 +21,13 @@ def get_screen_HW():
 # def set_text(text: str, font_size: int = 24, font_color: str = "black", font_weight: str = "bold") -> str:
     # return f'<span style="font-size: {font_size}px; color: {font_color}; font-weight: {font_weight};">{text}</span>'
 
-def set_text(text: str, font_size: int = 24, font_color: str = "black", font_weight: str = "bold", text_align: str = "left") -> str:
-    return f'<span style="font-size: {font_size}px; color: {font_color}; font-weight: {font_weight}; text-align: {text_align}; display: block;">{text}</span>'
+def set_text(text: str, font_size: int = 24, font_color: str = "black",\
+             font_weight: str = "bold", text_align: str = "left") -> str:
+    return f"""
+            <span style="font-size: {font_size}px; color: {font_color}; \
+            font-weight: {font_weight}; text-align: {text_align}; \
+            display: block;">{text}</span>
+            """
 
 import streamlit as st
 import streamlit.components.v1 as components

@@ -1,10 +1,15 @@
 [[pages]]
+path = "home_page.py"
+name = "Homepage"
+icon = "🏡"
+
+[[pages]]
 path = "chat_page.py"
-name = "Chatbot"
+name = "AI-Assistant"
 icon = "💬"
 
 [[pages]]
 path = "knowledge_page.py"
-name = "Knowledge"
+name = "Expert Knowledge"
 icon = ":books:"
 url_path = "graph" # You can override the default url path for a page

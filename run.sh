@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 激活 conda 环境
-# source ~/.bashrc
+source ~/.bashrc
 # eval "$(conda shell.bash hook)"
 source ~/miniconda3/etc/profile.d/conda.sh
 

@@ -14,7 +14,7 @@ import time
 import cv2
 import json
 import pyttsx3
-
+import platform
 
 from gpt_copilot.get_bndbox import get_boxes
 from gpt_copilot.rsg import rsg
@@ -341,12 +341,14 @@ def text2speech(text):
     voices = engine.getProperty('voices')  # getting details of current voice
     # engine.setProperty('voice', voices[0].id)  #changing index, changes voices. o for male
     engine.setProperty('voice', voices[1].id)  # changing index, changes voices. 1 for female
+    if platform.system() == 'Linux' or platform.system() == 'Darwin':
+        engine.setProperty('voice', "english")
     engine.runAndWait()
     engine.stop()
 
     """Saving Voice to a file"""
     # On linux make sure that 'espeak' and 'ffmpeg' are installed
-    engine.save_to_file(text, 'test.mp3')
+    engine.save_to_file(text, 'tmp.mp3')
     engine.runAndWait()
 
 
