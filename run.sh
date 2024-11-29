@@ -6,7 +6,7 @@ source ~/.bashrc
 source ~/miniconda3/etc/profile.d/conda.sh
 source ~/anaconda3/etc/profile.d/conda.sh
 
-conda activate py38
+conda activate vcop
 
 cd /home/zhangzr/virtual_copilot_demo
 

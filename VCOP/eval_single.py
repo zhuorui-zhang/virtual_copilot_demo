@@ -47,7 +47,7 @@ def load_model_and_params(args):
         model.cuda()
     return model, params
 
-def process_audio(wav_file_path, params):
+def process_audio(args, wav_file_path, params):
     if params['from_kaldi']:
         feature = kio.load_mat(wav_file_path)
     else:
@@ -112,7 +112,7 @@ def process_audio(wav_file_path, params):
 def predict_audio(wav_file_path, params, args, model, unit2char):
     # 读取和预处理音频文件
     utt_id = os.path.basename(wav_file_path)
-    feature, feature_length, target, target_length = process_audio(wav_file_path, params)
+    feature, feature_length, target, target_length = process_audio(args, wav_file_path, params)
     # 将特征转化为Tensor
     # feature = torch.FloatTensor(feature).unsqueeze(0)  # 添加batch维度
     # feature_length = torch.IntTensor([feature_length])
@@ -182,8 +182,8 @@ def predict_text_from_audio(args, wav_file_path):
     return pred_text
     
 if __name__ == '__main__':
-    # wav_file_path = "VCOP/data/2024-06-01T13-24-03.413453.wav"
-    wav_file_path = "out.wav"
+    wav_file_path = "VCOP/data/2024-06-01T13-24-03.413453.wav"
+    # wav_file_path = "out.wav"
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default=None)
     parser.add_argument('-n', '--ngpu', type=int, default=0)
