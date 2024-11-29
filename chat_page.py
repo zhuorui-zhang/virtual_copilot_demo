@@ -212,7 +212,6 @@ with col2:
             st.session_state.messages.append(message)
             # if os.path.exists("tmp.mp3"):
                 # st.audio('tmp.mp3', format="audio/mpeg", loop=True)
-
             # wait for io complete in text2speech
             timeout = 2
             start_time = time.time()

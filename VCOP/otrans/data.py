@@ -253,7 +253,7 @@ class AudioDataset(Dataset):
 
 
 def collate_fn_with_eos_bos(batch):
-
+    print(batch,'batch')
     utt_ids = [data[0] for data in batch]
     features_length = [data[2] for data in batch]
     targets_length = [data[4] for data in batch]
