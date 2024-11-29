@@ -4,6 +4,7 @@
 source ~/.bashrc
 # eval "$(conda shell.bash hook)"
 source ~/miniconda3/etc/profile.d/conda.sh
+source ~/anaconda3/etc/profile.d/conda.sh
 
 conda activate py38
 

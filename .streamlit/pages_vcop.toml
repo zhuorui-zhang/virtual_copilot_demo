@@ -1,0 +1,9 @@
+[[pages]]
+path = "home_page.py"
+name = "Homepage"
+icon = "🏡"
+
+[[pages]]
+path = "VCOP/vcop_page.py"
+name = "AI-Assistant"
+icon = "💬"
