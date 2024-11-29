@@ -1,3 +1,4 @@
+python == 3.8.20
 altair==5.4.1
 attrs==24.2.0
 auditwheel==6.0.0
