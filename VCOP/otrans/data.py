@@ -4,7 +4,7 @@ import torch
 import kaldiio as kio
 import numpy as np
 import torchaudio as ta
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 EOS = 0
 BOS = 0

@@ -1,5 +1,4 @@
 import tkinter as tk
-import streamlit as st
 
 def print_red(text):
     print(f"\033[91m{text}\033[00m")

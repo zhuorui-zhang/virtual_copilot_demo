@@ -137,7 +137,7 @@ def page(args):
 # if __name__ == '__main__':
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', type=str, default=None)
-parser.add_argument('-n', '--ngpu', type=int, default=1)
+parser.add_argument('-n', '--ngpu', type=int, default=0)
 parser.add_argument('-b', '--batch_size', type=int, default=4)
 parser.add_argument('-bw', '--beam_width', type=int, default=5)
 parser.add_argument('-p', '--penalty', type=float, default=0.6)

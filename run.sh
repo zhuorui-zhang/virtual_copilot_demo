@@ -11,6 +11,6 @@ conda activate vcop
 cd /home/zhangzr/virtual_copilot_demo
 
 # 运行 Streamlit 应用
-streamlit run web_app_v2.py
+streamlit run web_main.py
 
 read -p "Press [Enter] key to close..."
